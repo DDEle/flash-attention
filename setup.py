@@ -323,6 +323,9 @@ elif not SKIP_CUDA_BUILD and IS_ROCM:
         subprocess.run([sys.executable, f"{ck_dir}/example/ck_tile/01_fmha/generate.py", "-d", "fwd_appendkv", "--output_dir", "build", "--receipt", "2"], check=True)
         subprocess.run([sys.executable, f"{ck_dir}/example/ck_tile/01_fmha/generate.py", "-d", "fwd_splitkv", "--output_dir", "build", "--receipt", "2"], check=True)
         subprocess.run([sys.executable, f"{ck_dir}/example/ck_tile/01_fmha/generate.py", "-d", "bwd", "--output_dir", "build", "--receipt", "2"], check=True)
+        # subprocess.run([sys.executable, f"{ck_dir}/example/ck_tile/01_fmha/generate.py", "-d", "fwd_appendkv", "--output_dir", "build", "--receipt", "2", "--filter", "dummy"], check=True)
+        # subprocess.run([sys.executable, f"{ck_dir}/example/ck_tile/01_fmha/generate.py", "-d", "fwd_splitkv", "--output_dir", "build", "--receipt", "2", "--filter", "dummy@dummy"], check=True)
+        # subprocess.run([sys.executable, f"{ck_dir}/example/ck_tile/01_fmha/generate.py", "-d", "bwd", "--output_dir", "build", "--receipt", "2", "--filter", "fmha_bwd_dot_do_o_d64_fp16_group_o2_ps@fmha_bwd_convert_dq_d64_fp16_b64x128_group_o2_ps_ndeterministic@fmha_bwd_d64_fp16_group_b32x128x64x32x64x32x32x64x64_r1x4x1_r4x1x1_r1x4x1_w16x16x32_w16x16x16_o1_npad_nbias_ndbias_nmask_ndropout_ndeterministic"], check=True)
 
         # Check, if ATen/CUDAGeneratorImpl.h is found, otherwise use ATen/cuda/CUDAGeneratorImpl.h
         # See https://github.com/pytorch/pytorch/pull/70650
