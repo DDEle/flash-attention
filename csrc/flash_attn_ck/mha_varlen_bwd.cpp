@@ -380,7 +380,7 @@ mha_varlen_bwd(const at::Tensor &dout,                   // total_q x num_heads 
     if (max_seqlen_q > 0) {
         auto rng_state_ptr = reinterpret_cast<uint64_t*>(rng_state.data_ptr());
         auto drop_seed_offset = std::make_pair(rng_state_ptr, rng_state_ptr + 1);
-        ck_tile::stream_config stream_config{stream};
+        ck_tile::stream_config stream_config{stream, false, 1};
 
         auto traits =
             get_ck_fmha_varlen_bwd_traits(mask, q_dtype_str, head_size, is_dropout, alibi_slopes_.has_value(), deterministic);
@@ -411,8 +411,23 @@ mha_varlen_bwd(const at::Tensor &dout,                   // total_q x num_heads 
                 softmax_scale,
                 p_dropout,
                 drop_seed_offset);
-
+        printf("fmha_bwd_traits: hdim_q=%d, hdim_v=%d, data_type=%s, is_group_mode=%d, mask_type=%d, "
+            "bias_type=%d, has_dbias=%d, has_dropout=%d, is_store_randval=%d, is_deterministic=%d\n",
+            traits.hdim_q,
+            traits.hdim_v,
+            traits.data_type.c_str(),
+            traits.is_group_mode,
+            static_cast<int>(traits.mask_type),
+            static_cast<int>(traits.bias_type),
+            traits.has_dbias,
+            traits.has_dropout,
+            traits.is_store_randval,
+            traits.is_deterministic);
+        fflush(stdout);
+        // softmax_d.zero_();
         float t = fmha_bwd(traits, args, stream_config);
+        // std::cout << softmax_d << std::endl;
+        // std::cout << dq_accum << std::endl;
         TORCH_CHECK(t >= 0, "invalid argument for fmha_bwd");
     } else {
         // If seqlen_q == 0, then we have an empty tensor. We need to set the output to 0.
