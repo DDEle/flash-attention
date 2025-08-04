@@ -480,7 +480,7 @@ mha_fwd_kvcache(at::Tensor &q,                                      // batch_siz
     auto out_accum = torch::empty({num_splits, batch_size, num_heads, seqlen_q, head_size_8x}, opts.dtype(at::kFloat));
 
     auto stream = at::cuda::getCurrentCUDAStream().stream();
-    ck_tile::stream_config stream_config{stream};
+    ck_tile::stream_config stream_config{stream, false, 1};
 
     if (seqlen_knew > 0 || rotary_dim > 0) {
         auto appendkv_traits =
@@ -546,7 +546,18 @@ mha_fwd_kvcache(at::Tensor &q,                                      // batch_siz
             softmax_lse,
             softmax_lse_accum,
             out_accum);
-
+    printf("fmha_fwd_splitkv_traits: hdim_q=%d, hdim_v=%d, data_type=%s, "
+           "is_group_mode=%d, is_v_rowmajor=%d, has_logits_soft_cap=%d, mask_type=%d, "
+           "bias_type=%d, has_lse=%d, do_fp8_static_quant=%d\n",
+           splitkv_traits.hdim_q, splitkv_traits.hdim_v,
+           splitkv_traits.data_type.c_str(),
+           splitkv_traits.is_group_mode,
+           splitkv_traits.is_v_rowmajor,
+           splitkv_traits.has_logits_soft_cap,
+           static_cast<int>(splitkv_traits.mask_type),
+           static_cast<int>(splitkv_traits.bias_type),
+           splitkv_traits.has_lse,
+           splitkv_traits.do_fp8_static_quant);
     fmha_fwd_splitkv(splitkv_traits, splitkv_args, stream_config);
 
     if (head_size_og % 8 != 0) {
