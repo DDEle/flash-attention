@@ -273,7 +273,7 @@ mha_fwd(at::Tensor &q,                            // batch_size x seqlen_q x num
     if (seqlen_k > 0) {
         auto drop_seed_offset = std::make_pair(rng_state_ptr, rng_state_ptr + 1);
         auto stream = at::cuda::getCurrentHIPStream().stream();
-        ck_tile::stream_config stream_config{stream};
+        ck_tile::stream_config stream_config{stream, false, 1};
 
         auto traits =
             get_ck_fmha_fwd_traits(
@@ -306,7 +306,24 @@ mha_fwd(at::Tensor &q,                            // batch_size x seqlen_q x num
                 p_dropout,
                 drop_seed_offset);
 
-        float t = fmha_fwd(traits, args, stream_config);
+    printf("fmha_fwd_traits: hdim_q=%d, hdim_v=%d, data_type=%s, "
+           "is_group_mode=%d, is_v_rowmajor=%d, "
+           "has_logits_soft_cap=%d, mask_type=%d, bias_type=%d, has_lse=%d, "
+           "has_dropout=%d, do_fp8_static_quant=%d, skip_min_seqlen_q=%d\n",
+           traits.hdim_q,
+           traits.hdim_v,
+           traits.data_type.c_str(),
+           traits.is_group_mode,
+           traits.is_v_rowmajor,
+           traits.has_logits_soft_cap,
+           static_cast<int>(traits.mask_type),
+           static_cast<int>(traits.bias_type),
+           traits.has_lse,
+           traits.has_dropout,
+           traits.do_fp8_static_quant,
+           traits.skip_min_seqlen_q);
+        float t = fmha_fwd(traits,
+            args, stream_config);
         TORCH_CHECK(t >= 0, "invalid argument for fmha_fwd");
     }
     else {

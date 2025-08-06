@@ -965,6 +965,7 @@ class FlashAttnVarlenFunc(torch.autograd.Function):
         dout_padded = dout
         if head_size_og % 8 != 0:
             dout_padded = torch.nn.functional.pad(dout, [0, 8 - head_size_og % 8])
+        # import pdb; pdb.set_trace()
         _wrapped_flash_attn_varlen_backward(
             dout_padded,
             q,
